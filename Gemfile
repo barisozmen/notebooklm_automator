@@ -16,8 +16,10 @@ gem "tty-logger"
 gem "tty-markdown"
 gem "pastel"
 
-group :development do
+group :development, :test do
   gem "pry"
   gem "pry-rescue"
   gem "amazing_print"
+  gem "minitest"
+  gem "minitest-reporters"
 end
