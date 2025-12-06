@@ -74,6 +74,7 @@ class NotebookLMCLI < Thor
   def run_automation
     browser = @ui.with_spinner("Launching browser...") { Browser.instance }
     notebook_page = create_notebook(browser)
+    print_notebook_url(notebook_page)
     add_source(notebook_page)
     generate_outputs(notebook_page)
     show_success(notebook_page)
@@ -97,6 +98,14 @@ class NotebookLMCLI < Thor
     end
   end
 
+  def print_notebook_url(notebook_page)
+    url = notebook_page.current_url
+    url = "https://#{url}" unless url.start_with?("https://")
+    @ui.blank_line
+    @ui.url(url)
+    @ui.blank_line
+  end
+
   def add_source(notebook_page)
     @ui.with_spinner("Adding source...") do
       notebook_page.add_source(Config.source_url)
@@ -117,7 +126,6 @@ class NotebookLMCLI < Thor
     @ui.blank_line
     @ui.divider
     @ui.success("Notebook created successfully!")
-    @ui.url(notebook_page.current_url)
     @ui.divider
     @ui.blank_line
   end
