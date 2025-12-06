@@ -58,8 +58,9 @@ class NotebookPage < BasePage
     sleep 1
 
     Config.logger.debug "Filling URL: #{url}"
-    # Target the specific textarea in the modal with "Paste URLs" placeholder
-    fill_input_with_wait("textarea[formcontrolname='newUrl']", url)
+    # Find textarea associated with mat-label containing "Paste"
+    # YouTube uses "Paste YouTube URL", Website uses "Paste URLs"
+    fill_textarea_by_label("Paste", url)
 
     Config.logger.debug "Clicking 'Insert' to confirm source..."
     click_button_with_text("Insert")
@@ -85,6 +86,68 @@ class NotebookPage < BasePage
   end
 
   private
+
+  # Fill textarea by finding mat-label with specific text
+  def fill_textarea_by_label(label_text, text, timeout: 5)
+    start_time = Time.now
+    textarea = nil
+
+    loop do
+      # Try multiple XPath strategies to find the input/textarea
+      # YouTube uses <input>, Website uses <textarea>
+      xpaths = [
+        "//mat-label[contains(., '#{label_text}')]/ancestor::mat-form-field//input",
+        "//mat-label[contains(., '#{label_text}')]/ancestor::mat-form-field//textarea",
+        "//mat-label[contains(., '#{label_text}')]/following::input[1]",
+        "//mat-label[contains(., '#{label_text}')]/following::textarea[1]",
+        "//input[contains(@formcontrolname, 'newUrl')]",
+        "//textarea[contains(@formcontrolname, 'newUrl')]"
+      ]
+
+      xpaths.each_with_index do |xpath, i|
+        textarea = page.xpath(xpath).first
+        next unless textarea
+
+        begin
+          Config.logger.debug "Found textarea using strategy #{i + 1} for label containing '#{label_text}'"
+          textarea.focus
+          textarea.type(text)
+          return
+        rescue => e
+          Config.logger.debug "Textarea found but not interactable yet (strategy #{i + 1}): #{e.message}"
+          textarea = nil
+        end
+      end
+
+      if Time.now - start_time > timeout
+        # Debug: show available elements
+        if Config.logger.level == Logger::DEBUG
+          labels = page.xpath("//mat-label")
+          inputs = page.xpath("//input")
+          textareas = page.xpath("//textarea")
+          Config.logger.debug "Timeout finding input/textarea for label containing '#{label_text}'"
+          Config.logger.debug "Found #{labels.length} mat-labels:"
+          labels.each_with_index do |label, i|
+            Config.logger.debug "  #{i + 1}. '#{label.text.strip}'"
+          end
+          Config.logger.debug "Found #{inputs.length} inputs:"
+          inputs.first(5).each_with_index do |inp, i|
+            placeholder = inp[:placeholder] || 'no placeholder'
+            formcontrol = inp[:formcontrolname] || 'no formcontrolname'
+            Config.logger.debug "  #{i + 1}. placeholder='#{placeholder}', formcontrolname='#{formcontrol}'"
+          end
+          Config.logger.debug "Found #{textareas.length} textareas:"
+          textareas.each_with_index do |ta, i|
+            placeholder = ta[:placeholder] || 'no placeholder'
+            Config.logger.debug "  #{i + 1}. placeholder='#{placeholder}'"
+          end
+        end
+        raise "Timeout waiting for input/textarea associated with label containing: #{label_text}"
+      end
+
+      sleep 0.2
+    end
+  end
 
   def wait_for_generate_button(button_text, timeout: 10)
     Config.logger.debug "Waiting for button with text: #{button_text}"
