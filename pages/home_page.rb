@@ -5,6 +5,9 @@ require_relative "page_detector"
 class HomePage < BasePage
   # Navigate to NotebookLM home page and handle sign-in if needed
   def open
+    Config.logger.debug "Creating new tab..."
+    @page = page.create_page
+
     Config.logger.debug "Navigating to NotebookLM..."
     page.go_to(Config::NOTEBOOKLM_URL)
 
