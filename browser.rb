@@ -1,8 +1,15 @@
 require "ferrum"
+require "socket"
 require_relative "config"
 
 class Browser
   class ChromeNotRunningError < StandardError; end
+
+  def self.running?
+    Socket.tcp("localhost", 9222, connect_timeout: 1) { true }
+  rescue Errno::ECONNREFUSED, Errno::ETIMEDOUT, SocketError
+    false
+  end
 
   def self.instance
     @instance ||= connect_to_chrome

@@ -72,7 +72,8 @@ class NotebookLMCLI < Thor
   end
 
   def run_automation
-    browser = @ui.with_spinner("Launching browser...") { Browser.instance }
+    ensure_chrome_running
+    browser = @ui.with_spinner("Connecting to browser...") { Browser.instance }
     notebook_page = create_notebook(browser)
     print_notebook_url(notebook_page)
     add_source(notebook_page)
@@ -88,6 +89,23 @@ class NotebookLMCLI < Thor
     end
     @ui.blank_line
     raise
+  end
+
+  def ensure_chrome_running
+    return if Browser.running?
+
+    @ui.with_spinner("Starting Chrome...") do
+      launch_script = File.join(__dir__, "bin", "launch_chrome.sh")
+      Process.spawn(launch_script, out: "/dev/null", err: "/dev/null")
+
+      # Wait for Chrome to be ready (max 10 seconds)
+      20.times do
+        break if Browser.running?
+        sleep 0.5
+      end
+
+      raise "Chrome failed to start" unless Browser.running?
+    end
   end
 
   def create_notebook(browser)
