@@ -1,13 +1,32 @@
 require "logger"
+require_relative "output_type"
 
 module Config
   # Static configuration
   CHROME_PROFILE = File.expand_path("~/.notebooklm_chrome_profile")
   NOTEBOOKLM_URL = "https://notebooklm.google.com/"
-  WAIT_FOR_GENERATION = 15 # seconds
+
+  # Timing constants (seconds)
+  module Timing
+    BUTTON_CLICK = 1
+    PAGE_LOAD = 3
+    MODAL_OPEN = 1
+    MODAL_TRANSITION = 1.5
+    SOURCE_PROCESSING = 10
+    GENERATION_WAIT = 15
+    AFTER_GENERATE = 2
+
+    DEFAULT_TIMEOUT = 10
+    SHORT_TIMEOUT = 5
+    CONNECTION_TIMEOUT = 1
+
+    CHROME_STARTUP_RETRIES = 20
+    RETRY_INTERVAL = 0.5
+    POLL_INTERVAL = 0.1
+  end
 
   # Default output types
-  DEFAULT_OUTPUTS = %i[mindmap flashcards slides interactive_chart]
+  DEFAULT_OUTPUTS = OutputType.all_keys
 
   # Runtime state (set by CLI)
   class << self

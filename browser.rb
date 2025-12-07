@@ -6,7 +6,7 @@ class Browser
   class ChromeNotRunningError < StandardError; end
 
   def self.running?
-    Socket.tcp("localhost", 9222, connect_timeout: 1) { true }
+    Socket.tcp("localhost", 9222, connect_timeout: Config::Timing::CONNECTION_TIMEOUT) { true }
   rescue Errno::ECONNREFUSED, Errno::ETIMEDOUT, SocketError
     false
   end

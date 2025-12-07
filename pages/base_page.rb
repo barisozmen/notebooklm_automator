@@ -1,3 +1,6 @@
+require_relative "../element_waiter"
+require_relative "../config"
+
 class BasePage
   attr_reader :page
 
@@ -5,34 +8,24 @@ class BasePage
     @page = page
   end
 
-  # Helper method to wait for a selector to appear
-  def wait_for_selector(selector, timeout: 10)
-    start_time = Time.now
-    loop do
-      element = page.at_css(selector)
-      return element if element
-
-      if Time.now - start_time > timeout
-        raise "Timeout waiting for selector: #{selector}"
-      end
-
-      sleep 0.1
-    end
+  def log(message)
+    Config.logger.debug(message)
   end
 
-  # Helper method to wait for a button with specific text to appear
-  def wait_for_button(text, timeout: 10)
-    start_time = Time.now
-    loop do
-      button = page.xpath("//button[contains(., '#{text}')]").first
-      return button if button
+  def wait_for_selector(selector, timeout: Config::Timing::DEFAULT_TIMEOUT)
+    ElementWaiter.wait_until(
+      timeout: timeout,
+      interval: Config::Timing::POLL_INTERVAL,
+      error_message: "Selector not found: #{selector}"
+    ) { page.at_css(selector) }
+  end
 
-      if Time.now - start_time > timeout
-        raise "Timeout waiting for button with text: #{text}"
-      end
-
-      sleep 0.1
-    end
+  def wait_for_button(text, timeout: Config::Timing::DEFAULT_TIMEOUT)
+    ElementWaiter.wait_until(
+      timeout: timeout,
+      interval: Config::Timing::POLL_INTERVAL,
+      error_message: "Button not found: #{text}"
+    ) { page.xpath("//button[contains(., '#{text}')]").first }
   end
 
   # Helper to click an element by text content (buttons only)
@@ -87,29 +80,14 @@ class BasePage
     input.focus.type(text)
   end
 
-  # Helper to fill input fields with wait and visibility check
-  def fill_input_with_wait(selector, text, timeout: 5)
-    start_time = Time.now
-    input = nil
-
-    loop do
-      input = page.at_css(selector)
-      # Check if element exists and is visible
-      if input
-        begin
-          # Try to focus - this will fail if element is not visible/interactable
-          input.focus
-          break
-        rescue
-          # Element exists but not interactable yet, continue waiting
-        end
-      end
-
-      if Time.now - start_time > timeout
-        raise "Timeout waiting for visible input: #{selector}"
-      end
-
-      sleep 0.2
+  def fill_input_with_wait(selector, text, timeout: Config::Timing::SHORT_TIMEOUT)
+    input = ElementWaiter.wait_until(
+      timeout: timeout,
+      interval: 0.2,
+      error_message: "Input not interactable: #{selector}"
+    ) do
+      element = page.at_css(selector)
+      element if element && element.focus rescue nil
     end
 
     input.type(text)

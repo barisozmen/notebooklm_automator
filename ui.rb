@@ -4,6 +4,7 @@ require "tty-table"
 require "tty-box"
 require "tty-command"
 require "pastel"
+require_relative "output_type"
 
 class UI
   attr_reader :prompt, :spinner, :pastel, :command
@@ -76,14 +77,7 @@ class UI
   end
 
   def select_output_types
-    choices = [
-      { name: "Mind Map", value: :mindmap },
-      { name: "Flashcards", value: :flashcards },
-      { name: "Slides", value: :slides },
-      { name: "Interactive Chart", value: :interactive_chart }
-    ]
-
-    prompt.multi_select("📊 Select outputs to generate:", choices, per_page: 10, echo: false)
+    prompt.multi_select("📊 Select outputs to generate:", OutputType.for_ui, per_page: 10, echo: false)
   end
 
   def confirm(question)

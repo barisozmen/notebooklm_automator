@@ -98,10 +98,9 @@ class NotebookLMCLI < Thor
       launch_script = File.join(__dir__, "bin", "launch_chrome.sh")
       Process.spawn(launch_script, out: "/dev/null", err: "/dev/null")
 
-      # Wait for Chrome to be ready (max 10 seconds)
-      20.times do
+      Config::Timing::CHROME_STARTUP_RETRIES.times do
         break if Browser.running?
-        sleep 0.5
+        sleep Config::Timing::RETRY_INTERVAL
       end
 
       raise "Chrome failed to start" unless Browser.running?
@@ -135,7 +134,7 @@ class NotebookLMCLI < Thor
     Config.output_types.each do |type|
       @ui.with_spinner("Generating #{type}...") do
         notebook_page.click_generate(type)
-        sleep Config::WAIT_FOR_GENERATION
+        sleep Config::Timing::GENERATION_WAIT
       end
     end
   end
