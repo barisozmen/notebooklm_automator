@@ -1,18 +1,18 @@
 # Single source of truth for output types
 class OutputType
-  ALL = [
-    new(:mindmap, "Mind Map"),
-    new(:flashcards, "Flashcards"),
-    new(:slides, "Slide Deck"),
-    new(:interactive_chart, "Infographic")
-  ].freeze
-
   attr_reader :key, :label
 
   def initialize(key, label)
     @key = key
     @label = label
   end
+
+  ALL = [
+    new(:mindmap, "Mind Map"),
+    new(:flashcards, "Flashcards"),
+    new(:slides, "Slide Deck"),
+    new(:interactive_chart, "Infographic")
+  ].freeze
 
   def self.find(key)
     ALL.find { |type| type.key == key } || raise("Unknown output type: #{key}")
